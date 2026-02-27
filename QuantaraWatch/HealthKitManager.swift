@@ -250,7 +250,7 @@ class HealthKitManager: ObservableObject {
     }
 
     // MARK: - API Configuration
-    private let apiBaseURL = "https://quantara-watch-api.railway.app"
+    private let apiBaseURL = "https://quantara-watch-api-production.up.railway.app"
     @Published var lastSyncTime: Date?
     @Published var syncStatus: SyncStatus = .idle
 
