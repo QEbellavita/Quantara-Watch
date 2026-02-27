@@ -249,23 +249,119 @@ class HealthKitManager: ObservableObject {
         healthStore.execute(query)
     }
 
+    // MARK: - API Configuration
+    private let apiBaseURL = "https://quantara-watch-api.railway.app"
+    @Published var lastSyncTime: Date?
+    @Published var syncStatus: SyncStatus = .idle
+
+    enum SyncStatus {
+        case idle, syncing, success, failed
+    }
+
+    // Device ID for user identification
+    private var deviceId: String {
+        if let id = UserDefaults.standard.string(forKey: "quantara_device_id") {
+            return id
+        }
+        let newId = UUID().uuidString
+        UserDefaults.standard.set(newId, forKey: "quantara_device_id")
+        return newId
+    }
+
     // MARK: - Send to Quantara Backend
     func syncToQuantaraBackend() {
+        guard syncStatus != .syncing else { return }
+
+        DispatchQueue.main.async {
+            self.syncStatus = .syncing
+        }
+
         let biometricData: [String: Any] = [
+            "device_id": deviceId,
             "timestamp": ISO8601DateFormatter().string(from: Date()),
-            "heartRate": heartRate,
+            "heart_rate": heartRate,
             "hrv": hrv,
-            "activeEnergy": activeEnergy,
+            "active_energy": activeEnergy,
             "steps": steps,
-            "exerciseMinutes": exerciseMinutes,
-            "minHeartRate": minHeartRate,
-            "maxHeartRate": maxHeartRate,
-            "avgHeartRate": avgHeartRate
+            "exercise_minutes": exerciseMinutes,
+            "min_heart_rate": minHeartRate,
+            "max_heart_rate": maxHeartRate,
+            "avg_heart_rate": avgHeartRate,
+            "wellness_score": calculateWellnessScore()
         ]
 
-        // TODO: Send to Quantara Neural Ecosystem API
-        // POST to: https://your-quantara-api.railway.app/api/biometrics/sync
-        print("Syncing to Quantara: \(biometricData)")
+        guard let url = URL(string: "\(apiBaseURL)/api/sync") else {
+            DispatchQueue.main.async { self.syncStatus = .failed }
+            return
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        do {
+            request.httpBody = try JSONSerialization.data(withJSONObject: biometricData)
+        } catch {
+            print("Failed to serialize data: \(error)")
+            DispatchQueue.main.async { self.syncStatus = .failed }
+            return
+        }
+
+        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    print("Sync failed: \(error.localizedDescription)")
+                    self?.syncStatus = .failed
+                    return
+                }
+
+                if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 {
+                    self?.syncStatus = .success
+                    self?.lastSyncTime = Date()
+                    print("Successfully synced to Quantara backend")
+                } else {
+                    self?.syncStatus = .failed
+                }
+            }
+        }.resume()
+    }
+
+    // Auto-sync every 5 minutes
+    func startAutoSync() {
+        Timer.scheduledTimer(withTimeInterval: 300, repeats: true) { [weak self] _ in
+            self?.fetchAllData()
+            self?.syncToQuantaraBackend()
+        }
+    }
+
+    // Calculate wellness score
+    private func calculateWellnessScore() -> Int {
+        var score = 50
+        if hrv > 40 { score += 15 }
+        if hrv > 60 { score += 10 }
+        if steps > 5000 { score += 10 }
+        if steps > 10000 { score += 10 }
+        if heartRate > 50 && heartRate < 100 { score += 5 }
+        return min(score, 100)
+    }
+
+    // Sync breathing session
+    func syncBreathingSession(duration: Int, preHeartRate: Int, postHeartRate: Int) {
+        let sessionData: [String: Any] = [
+            "device_id": deviceId,
+            "duration_seconds": duration,
+            "pre_heart_rate": preHeartRate,
+            "post_heart_rate": postHeartRate
+        ]
+
+        guard let url = URL(string: "\(apiBaseURL)/api/breathing") else { return }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try? JSONSerialization.data(withJSONObject: sessionData)
+
+        URLSession.shared.dataTask(with: request) { _, _, _ in }.resume()
     }
 
     deinit {
