@@ -250,7 +250,8 @@ class HealthKitManager: ObservableObject {
     }
 
     // MARK: - API Configuration
-    private let apiBaseURL = "https://quantara-watch-api-production.up.railway.app"
+    // Connect to main Quantara Backend (same as Quantara-Frontend)
+    private let apiBaseURL = "https://quantara-backend-production.up.railway.app"
     @Published var lastSyncTime: Date?
     @Published var syncStatus: SyncStatus = .idle
 
@@ -290,7 +291,7 @@ class HealthKitManager: ObservableObject {
             "wellness_score": calculateWellnessScore()
         ]
 
-        guard let url = URL(string: "\(apiBaseURL)/api/sync") else {
+        guard let url = URL(string: "\(apiBaseURL)/api/watch/sync") else {
             DispatchQueue.main.async { self.syncStatus = .failed }
             return
         }
@@ -354,7 +355,7 @@ class HealthKitManager: ObservableObject {
             "post_heart_rate": postHeartRate
         ]
 
-        guard let url = URL(string: "\(apiBaseURL)/api/breathing") else { return }
+        guard let url = URL(string: "\(apiBaseURL)/api/watch/breathing") else { return }
 
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
