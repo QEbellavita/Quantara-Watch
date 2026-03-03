@@ -11,21 +11,25 @@ struct ContentView: View {
             DashboardView()
                 .tag(0)
 
+            // Stress Insights (Neural Workflow AI Engine)
+            StressInsightsView()
+                .tag(1)
+
             // Heart Rate Live
             HeartRateLiveView()
-                .tag(1)
+                .tag(2)
 
             // HRV & Recovery
             HRVRecoveryView()
-                .tag(2)
+                .tag(3)
 
             // Activity Rings
             ActivityRingsView()
-                .tag(3)
+                .tag(4)
 
             // Breathing Exercise
             BreathingView()
-                .tag(4)
+                .tag(5)
         }
         .tabViewStyle(.verticalPage)
         .onAppear {
@@ -114,6 +118,9 @@ struct DashboardView: View {
                             color: .cyan
                         )
                     }
+
+                    // AI Stress Card (Neural Workflow Engine)
+                    StressQuickCard()
 
                     // Wellness Score
                     WellnessScoreCard(score: calculateWellnessScore())
@@ -276,6 +283,71 @@ struct WellnessScoreCard: View {
         .background(
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color.black.opacity(0.3))
+        )
+    }
+}
+
+// MARK: - Stress Quick Card (Dashboard)
+struct StressQuickCard: View {
+    @EnvironmentObject var healthManager: HealthKitManager
+
+    var stressColor: Color {
+        switch healthManager.stressLevel.lowercased() {
+        case "low": return .green
+        case "medium": return .yellow
+        case "high": return .red
+        default: return .gray
+        }
+    }
+
+    var body: some View {
+        HStack {
+            // AI Brain Icon
+            Image(systemName: "brain.head.profile")
+                .font(.system(size: 18))
+                .foregroundStyle(
+                    LinearGradient(colors: [.purple, .cyan], startPoint: .leading, endPoint: .trailing)
+                )
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text("AI Stress Level")
+                    .font(.system(size: 8))
+                    .foregroundColor(.gray)
+                Text(healthManager.stressLevel == "unknown" ? "Analyzing..." : healthManager.stressLevel.capitalized)
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(stressColor)
+            }
+
+            Spacer()
+
+            // Mini stress ring
+            ZStack {
+                Circle()
+                    .stroke(stressColor.opacity(0.2), lineWidth: 3)
+                    .frame(width: 28, height: 28)
+
+                Circle()
+                    .trim(from: 0, to: healthManager.stressScore)
+                    .stroke(stressColor, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                    .frame(width: 28, height: 28)
+                    .rotationEffect(.degrees(-90))
+
+                Image(systemName: "waveform.path.ecg")
+                    .font(.system(size: 8))
+                    .foregroundColor(stressColor)
+            }
+        }
+        .padding(10)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.black.opacity(0.3))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(
+                            LinearGradient(colors: [.purple.opacity(0.4), .cyan.opacity(0.2)], startPoint: .topLeading, endPoint: .bottomTrailing),
+                            lineWidth: 0.5
+                        )
+                )
         )
     }
 }
@@ -458,6 +530,232 @@ struct HRVRecoveryView: View {
                 .padding(.top, 8)
             }
         }
+    }
+}
+
+// MARK: - Stress Insights View (Neural Workflow AI Engine - Physiol_Rec)
+struct StressInsightsView: View {
+    @EnvironmentObject var healthManager: HealthKitManager
+    @State private var pulseAnimation = false
+
+    var stressColor: Color {
+        switch healthManager.stressLevel.lowercased() {
+        case "low": return .green
+        case "medium": return .yellow
+        case "high": return .red
+        default: return .gray
+        }
+    }
+
+    var emotionIcon: String {
+        switch healthManager.emotionQuadrant.lowercased() {
+        case "high arousal, positive valence": return "sun.max.fill"
+        case "high arousal, negative valence": return "bolt.fill"
+        case "low arousal, positive valence": return "leaf.fill"
+        case "low arousal, negative valence": return "moon.zzz.fill"
+        default: return "brain.head.profile"
+        }
+    }
+
+    var emotionLabel: String {
+        switch healthManager.emotionQuadrant.lowercased() {
+        case "high arousal, positive valence": return "Energized"
+        case "high arousal, negative valence": return "Stressed"
+        case "low arousal, positive valence": return "Calm"
+        case "low arousal, negative valence": return "Tired"
+        default: return "Analyzing..."
+        }
+    }
+
+    var body: some View {
+        ZStack {
+            // Neural-style gradient background
+            LinearGradient(
+                colors: [
+                    Color(red: 0.1, green: 0.05, blue: 0.2),
+                    Color(red: 0.05, green: 0.1, blue: 0.15)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
+
+            ScrollView {
+                VStack(spacing: 10) {
+                    // Header
+                    HStack {
+                        Image(systemName: "brain.head.profile")
+                            .font(.system(size: 12))
+                            .foregroundStyle(
+                                LinearGradient(colors: [.purple, .cyan], startPoint: .leading, endPoint: .trailing)
+                            )
+                        Text("AI Insights")
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundColor(.gray)
+                    }
+
+                    // Main Stress Indicator
+                    ZStack {
+                        // Pulsing background
+                        Circle()
+                            .fill(stressColor.opacity(0.2))
+                            .frame(width: 90, height: 90)
+                            .scaleEffect(pulseAnimation ? 1.1 : 1.0)
+                            .animation(
+                                Animation.easeInOut(duration: 1.5).repeatForever(autoreverses: true),
+                                value: pulseAnimation
+                            )
+
+                        // Stress ring
+                        Circle()
+                            .stroke(stressColor.opacity(0.3), lineWidth: 6)
+                            .frame(width: 80, height: 80)
+
+                        Circle()
+                            .trim(from: 0, to: healthManager.stressScore)
+                            .stroke(
+                                LinearGradient(colors: [stressColor, stressColor.opacity(0.6)], startPoint: .leading, endPoint: .trailing),
+                                style: StrokeStyle(lineWidth: 6, lineCap: .round)
+                            )
+                            .frame(width: 80, height: 80)
+                            .rotationEffect(.degrees(-90))
+
+                        VStack(spacing: 2) {
+                            Text(healthManager.stressLevel.capitalized)
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundColor(stressColor)
+                            Text("Stress")
+                                .font(.system(size: 8))
+                                .foregroundColor(.gray)
+                        }
+                    }
+                    .onAppear { pulseAnimation = true }
+
+                    // Quick Stats Row
+                    HStack(spacing: 8) {
+                        // Emotion State
+                        VStack(spacing: 4) {
+                            Image(systemName: emotionIcon)
+                                .font(.system(size: 16))
+                                .foregroundStyle(
+                                    LinearGradient(colors: [.purple, .pink], startPoint: .top, endPoint: .bottom)
+                                )
+                            Text(emotionLabel)
+                                .font(.system(size: 9, weight: .medium))
+                                .foregroundColor(.white)
+                            Text("Emotion")
+                                .font(.system(size: 7))
+                                .foregroundColor(.gray)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 8)
+                        .background(
+                            RoundedRectangle(cornerRadius: 10)
+                                .fill(Color.black.opacity(0.4))
+                        )
+
+                        // Activity State
+                        VStack(spacing: 4) {
+                            Image(systemName: activityIcon)
+                                .font(.system(size: 16))
+                                .foregroundStyle(
+                                    LinearGradient(colors: [.green, .cyan], startPoint: .top, endPoint: .bottom)
+                                )
+                            Text(healthManager.activityState.capitalized)
+                                .font(.system(size: 9, weight: .medium))
+                                .foregroundColor(.white)
+                            Text("Activity")
+                                .font(.system(size: 7))
+                                .foregroundColor(.gray)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 8)
+                        .background(
+                            RoundedRectangle(cornerRadius: 10)
+                                .fill(Color.black.opacity(0.4))
+                        )
+                    }
+
+                    // HRV Health Card
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("HRV Health")
+                                .font(.system(size: 8))
+                                .foregroundColor(.gray)
+                            Text(healthManager.hrvHealthGrade)
+                                .font(.system(size: 16, weight: .bold))
+                                .foregroundColor(hrvHealthColor)
+                        }
+
+                        Spacer()
+
+                        // Score indicator
+                        ZStack {
+                            Circle()
+                                .stroke(hrvHealthColor.opacity(0.3), lineWidth: 3)
+                                .frame(width: 32, height: 32)
+                            Circle()
+                                .trim(from: 0, to: healthManager.hrvHealthScore)
+                                .stroke(hrvHealthColor, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                                .frame(width: 32, height: 32)
+                                .rotationEffect(.degrees(-90))
+                            Image(systemName: "heart.text.square.fill")
+                                .font(.system(size: 10))
+                                .foregroundColor(hrvHealthColor)
+                        }
+                    }
+                    .padding(10)
+                    .background(
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(Color.black.opacity(0.3))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .stroke(hrvHealthColor.opacity(0.3), lineWidth: 0.5)
+                            )
+                    )
+
+                    // Sync status
+                    if let lastTime = healthManager.lastPredictionTime {
+                        HStack {
+                            Circle()
+                                .fill(Color.green)
+                                .frame(width: 6, height: 6)
+                            Text("Updated \(timeAgo(lastTime))")
+                                .font(.system(size: 8))
+                                .foregroundColor(.gray)
+                        }
+                    }
+                }
+                .padding(.horizontal, 6)
+            }
+        }
+    }
+
+    var activityIcon: String {
+        switch healthManager.activityState.lowercased() {
+        case "rest": return "bed.double.fill"
+        case "light": return "figure.walk"
+        case "moderate": return "figure.run"
+        case "vigorous": return "flame.fill"
+        default: return "figure.stand"
+        }
+    }
+
+    var hrvHealthColor: Color {
+        switch healthManager.hrvHealthGrade.lowercased() {
+        case "excellent", "a": return .green
+        case "good", "b": return .cyan
+        case "moderate", "c": return .yellow
+        case "low", "d", "f": return .orange
+        default: return .gray
+        }
+    }
+
+    func timeAgo(_ date: Date) -> String {
+        let seconds = Int(-date.timeIntervalSinceNow)
+        if seconds < 60 { return "just now" }
+        if seconds < 3600 { return "\(seconds / 60)m ago" }
+        return "\(seconds / 3600)h ago"
     }
 }
 
