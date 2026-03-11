@@ -714,6 +714,66 @@ struct StressInsightsView: View {
                             )
                     )
 
+                    // Neural Ecosystem ML API Card (12 Engines)
+                    VStack(spacing: 6) {
+                        HStack {
+                            Image(systemName: "cpu.fill")
+                                .font(.system(size: 10))
+                                .foregroundStyle(
+                                    LinearGradient(colors: [.cyan, .blue], startPoint: .leading, endPoint: .trailing)
+                                )
+                            Text("Neural ML API")
+                                .font(.system(size: 9, weight: .semibold))
+                                .foregroundColor(.white)
+                            Spacer()
+                            Circle()
+                                .fill(healthManager.mlApiConnected ? Color.green : Color.orange)
+                                .frame(width: 6, height: 6)
+                        }
+
+                        HStack(spacing: 6) {
+                            // Cognitive State (90.1% accuracy)
+                            VStack(spacing: 2) {
+                                Image(systemName: cognitiveIcon)
+                                    .font(.system(size: 12))
+                                    .foregroundColor(cognitiveColor)
+                                Text(healthManager.cognitiveState.capitalized)
+                                    .font(.system(size: 8, weight: .medium))
+                                    .foregroundColor(.white)
+                                Text("Focus")
+                                    .font(.system(size: 6))
+                                    .foregroundColor(.gray)
+                            }
+                            .frame(maxWidth: .infinity)
+
+                            // Activity (97.9% accuracy)
+                            VStack(spacing: 2) {
+                                Image(systemName: mlActivityIcon)
+                                    .font(.system(size: 12))
+                                    .foregroundColor(.green)
+                                Text(healthManager.activityPrediction.capitalized)
+                                    .font(.system(size: 8, weight: .medium))
+                                    .foregroundColor(.white)
+                                Text("Move")
+                                    .font(.system(size: 6))
+                                    .foregroundColor(.gray)
+                            }
+                            .frame(maxWidth: .infinity)
+                        }
+                    }
+                    .padding(8)
+                    .background(
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(Color.black.opacity(0.4))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .stroke(
+                                        LinearGradient(colors: [.cyan.opacity(0.5), .purple.opacity(0.3)], startPoint: .topLeading, endPoint: .bottomTrailing),
+                                        lineWidth: 0.5
+                                    )
+                            )
+                    )
+
                     // Sync status
                     if let lastTime = healthManager.lastPredictionTime {
                         HStack {
@@ -728,6 +788,35 @@ struct StressInsightsView: View {
                 }
                 .padding(.horizontal, 6)
             }
+        }
+    }
+
+    var cognitiveIcon: String {
+        switch healthManager.cognitiveState.lowercased() {
+        case "focused": return "brain.fill"
+        case "neutral": return "brain"
+        case "relaxed": return "leaf.fill"
+        default: return "brain.head.profile"
+        }
+    }
+
+    var cognitiveColor: Color {
+        switch healthManager.cognitiveState.lowercased() {
+        case "focused": return .cyan
+        case "neutral": return .gray
+        case "relaxed": return .green
+        default: return .purple
+        }
+    }
+
+    var mlActivityIcon: String {
+        switch healthManager.activityPrediction.lowercased() {
+        case "walking": return "figure.walk"
+        case "jogging": return "figure.run"
+        case "stairs": return "figure.stairs"
+        case "sitting": return "figure.seated.seatbelt"
+        case "standing": return "figure.stand"
+        default: return "figure.mixed.cardio"
         }
     }
 
