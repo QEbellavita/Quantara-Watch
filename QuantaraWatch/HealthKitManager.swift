@@ -272,6 +272,7 @@ class HealthKitManager: ObservableObject {
     // MARK: - API Configuration
     // Connect to Quantara Backend API (same as main app)
     private let apiBaseURL = "https://quantara-backend-production.up.railway.app"
+    private let watchApiKey = "quantara-watch-device-key"
 
     // Neural Ecosystem ML API (12-engine predictions)
     private let mlApiURL = "https://quantara-ml-api-production.up.railway.app"
@@ -342,6 +343,7 @@ class HealthKitManager: ObservableObject {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(watchApiKey, forHTTPHeaderField: "X-Watch-API-Key")
 
         do {
             request.httpBody = try JSONSerialization.data(withJSONObject: biometricData)
@@ -403,6 +405,7 @@ class HealthKitManager: ObservableObject {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(watchApiKey, forHTTPHeaderField: "X-Watch-API-Key")
         request.httpBody = try? JSONSerialization.data(withJSONObject: sessionData)
 
         URLSession.shared.dataTask(with: request) { _, _, _ in }.resume()
