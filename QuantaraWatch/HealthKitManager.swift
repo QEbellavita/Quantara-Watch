@@ -18,6 +18,10 @@ class HealthKitManager: ObservableObject {
     @Published var exerciseMinutes: Int = 0
     @Published var isAuthorized: Bool = false
 
+    // On-device CoreML inference (Neural Workflow AI Engine)
+    private let modelRunner = WatchModelRunner()
+    @Published var predictionSource: String = "cloud"
+
     // Physiol_Rec stress prediction (Neural Workflow AI Engine)
     @Published var stressLevel: String = "unknown"
     @Published var stressScore: Double = 0.0
@@ -470,6 +474,42 @@ class HealthKitManager: ObservableObject {
         }
     }
 
+    /// On-device CoreML stress prediction with cloud fallback
+    /// Uses WatchModelRunner actor for local inference (Neural Workflow AI Engine)
+    func getLocalStressPrediction() {
+        Task {
+            let prediction = await modelRunner.predictStress(
+                heartRate: Double(heartRate),
+                hrv: hrv,
+                skinTemp: 33.5,
+                respirationRate: 16.0,
+                steps: Double(steps),
+                sleepMinutes: 0,
+                activityLevel: exerciseMinutes > 0 ? 0.7 : 0.3
+            )
+
+            await MainActor.run {
+                if let prediction = prediction {
+                    self.stressLevel = prediction.level
+                    self.stressScore = prediction.score
+                    self.predictionSource = prediction.source
+                    self.lastPredictionTime = Date()
+                    print("[Watch] Local prediction: \(prediction.level) (conf: \(prediction.confidence))")
+                    // Update Watch complication with stress data
+                    let stressInt = prediction.level == "high" ? 3 : (prediction.level == "medium" ? 2 : 1)
+                    ComplicationController.updateComplicationData(
+                        stress: stressInt,
+                        mood: self.emotionQuadrant,
+                        hrv: Int(self.hrv)
+                    )
+                } else {
+                    self.getStressPrediction()
+                    self.predictionSource = "cloud"
+                }
+            }
+        }
+    }
+
     private func callPhysiolPredictAPI(data: [String: Any]) {
         guard let url = URL(string: "\(apiBaseURL)/api/physiol/predict") else { return }
 
@@ -555,15 +595,15 @@ class HealthKitManager: ObservableObject {
 
     // Start periodic stress predictions (every 30 seconds)
     func startStressPredictions() {
-        // Initial prediction
-        getStressPrediction()
+        // Initial prediction — use on-device CoreML with cloud fallback
+        getLocalStressPrediction()
 
         // Start Neural Ecosystem ML API predictions
         getMLAPIPredictions()
 
         // Periodic predictions every 30 seconds
         Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
-            self?.getStressPrediction()
+            self?.getLocalStressPrediction()
             self?.getMLAPIPredictions()
         }
     }

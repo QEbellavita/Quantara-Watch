@@ -785,6 +785,16 @@ struct StressInsightsView: View {
                                 .foregroundColor(.gray)
                         }
                     }
+
+                    // Prediction source badge (on-device CoreML vs cloud)
+                    HStack(spacing: 4) {
+                        Image(systemName: healthManager.predictionSource == "on-device" ? "cpu" : "cloud")
+                            .font(.system(size: 8))
+                            .foregroundColor(healthManager.predictionSource == "on-device" ? .green : .cyan)
+                        Text(healthManager.predictionSource == "on-device" ? "On-Device" : "Cloud")
+                            .font(.system(size: 7, weight: .medium))
+                            .foregroundColor(healthManager.predictionSource == "on-device" ? .green : .cyan)
+                    }
                 }
                 .padding(.horizontal, 6)
             }
