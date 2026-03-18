@@ -1,0 +1,59 @@
+{
+  "models": {
+    "wesad_stress": {
+      "version": "20260318",
+      "filename": "wesad_stress_v20260318.mlmodelc",
+      "inputSchema": {
+        "features": "float[7]"
+      },
+      "outputSchema": {
+        "class": "string",
+        "confidence": "float"
+      },
+      "quantized": false,
+      "minIOSVersion": "15.1"
+    },
+    "biometric_stress": {
+      "version": "20260319",
+      "filename": "biometric_stress_v20260319.mlmodelc",
+      "scalerFile": "biometric_stress_scaler.json",
+      "inputSchema": {
+        "features": "float[12]"
+      },
+      "outputSchema": {
+        "class": "string",
+        "confidence": "float"
+      },
+      "quantized": false,
+      "minIOSVersion": "15.1"
+    },
+    "sleep_stage": {
+      "version": "20260318",
+      "filename": "sleep_stage_v20260318.mlmodelc",
+      "inputSchema": {
+        "features": "float[5]"
+      },
+      "outputSchema": {
+        "class": "string",
+        "confidence": "float"
+      },
+      "quantized": false,
+      "minIOSVersion": "15.1"
+    },
+    "activity": {
+      "version": "20260319",
+      "filename": "activity_wisdm_v20260319.mlmodelc",
+      "scalerFile": "activity_wisdm_scaler.json",
+      "inputSchema": {
+        "features": "float[27]"
+      },
+      "outputSchema": {
+        "class": "string",
+        "confidence": "float"
+      },
+      "quantized": false,
+      "minIOSVersion": "15.1"
+    }
+  },
+  "generated_at": "2026-03-19"
+}
